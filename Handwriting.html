@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Handwriting Studio – Text to Handwriting Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat&family=Kalam&family=Indie+Flower&family=Patrick+Hand&family=Homemade+Apple&family=Nanum+Pen+Script&family=Gloria+Hallelujah&family=Schoolbell&family=Reenie+Beanie&family=Shadows+Into+Light&family=Handlee&family=Dancing+Script&family=Covered+By+Your+Grace&family=Manjari&family=Inter:wght@400;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f5f6fb;--card:#fff;--tx:#1b1f2a;--mut:#5d6578;--bd:#dfe3ee;--pr:#4f46e5;--prt:#fff;--soft:#eef0ff;--sh:0 4px 18px rgba(30,40,90,.08);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141c;--card:#1b1e29;--tx:#eceef6;--mut:#a2a9bd;--bd:#2c3140;--pr:#8b85ff;--prt:#10121a;--soft:#262a40;--sh:0 4px 18px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141c;--card:#1b1e29;--tx:#eceef6;--mut:#a2a9bd;--bd:#2c3140;--pr:#8b85ff;--prt:#10121a;--soft:#262a40;--sh:0 4px 18px rgba(0,0,0,.4);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 Inter,system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;max-width:1400px;margin:auto}
+.logo{font-weight:700;font-size:20px;display:flex;gap:8px;align-items:center}
+.logo b{background:var(--pr);color:var(--prt);border-radius:10px;padding:2px 9px}
+.hero{text-align:center;padding:4px 16px 14px;max-width:760px;margin:auto}
+.hero h1{font-size:clamp(24px,4vw,36px);margin:0 0 6px}
+.hero p{margin:0;color:var(--mut)}
+main{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:18px;max-width:1400px;margin:auto;padding:0 16px 110px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 12px;display:flex;gap:10px;align-items:center}
+.n{background:var(--pr);color:var(--prt);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:14px;flex:none}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
+input[type=text],textarea,select{width:100%;padding:11px 12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:190px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--pr);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1.5px solid var(--bd);background:var(--card);color:var(--tx);padding:9px 13px;border-radius:10px;font:600 14px Inter,sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--pr)}
+.btn.pr{background:var(--pr);color:var(--prt);border-color:var(--pr)}
+.meta{color:var(--mut);font-size:13px;margin-left:auto}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.chip{border:2px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:10px;padding:8px 6px;cursor:pointer;text-align:center;font-size:13px}
+.chip[aria-pressed=true]{border-color:var(--pr);background:var(--soft)}
+.chip .aa{font-size:22px;line-height:1.2;display:block}
+.sw{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sw button{width:36px;height:36px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--bd);cursor:pointer}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--pr)}
+.sw input{width:40px;height:36px;border:0;padding:0;background:none;cursor:pointer}
+.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;align-items:center}
+.sl input{grid-column:1/3;width:100%;accent-color:var(--pr);height:28px}
+.sl output{color:var(--mut);font-size:13px}
+.sl label{margin:10px 0 0}
+.chk{display:flex;gap:10px;align-items:center;font-weight:500;margin:10px 0;font-size:15px}
+.chk input{width:20px;height:20px;accent-color:var(--pr)}
+#stage{min-width:0}
+.pgw{margin:0 auto 16px;box-shadow:0 6px 24px rgba(0,0,0,.22)}
+.pglab{text-align:center;color:var(--mut);font-size:13px;margin:0 0 6px}
+.page{position:relative;width:794px;height:1123px;transform-origin:top left;overflow:hidden}
+.clip{position:absolute;overflow:hidden}
+.inner{position:relative}
+.ln{min-height:var(--lh);line-height:var(--lh);overflow-wrap:break-word}
+.hd{text-align:center;line-height:calc(var(--lh)*2)}
+.w{display:inline-block}
+.shade{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.14)),linear-gradient(90deg,rgba(0,0,0,.1),transparent 6%)}
+.mg{position:absolute;top:0;bottom:0;width:2px}
+.pn{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:20px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:5}
+.bar select{width:auto;padding:9px}
+.bar .btn{padding:11px 16px;font-size:15px}
+.tips{max-width:1000px;margin:10px auto 120px;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tips .card{margin:0}
+.tips p{margin:0;color:var(--mut);font-size:14px}
+.tips h3{margin:0 0 4px;font-size:16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><b>✍</b> Handwriting Studio</div>
+  <button class="btn" id="theme" aria-label="Switch light or dark mode">🌓 Theme</button>
+</header>
+<div class="hero">
+  <h1>Turn typed text into real-looking handwriting</h1>
+  <p>Free, no sign-up, works on your phone. Your text never leaves your device.</p>
+</div>
+<main>
+  <section aria-label="Controls">
+    <div class="card">
+      <h2><span class="n">1</span> Write your text</h2>
+      <label for="head">Heading (optional)</label>
+      <input type="text" id="head" placeholder="e.g. Science Assignment">
+      <label for="date">Top-right note (date / name / roll no.)</label>
+      <input type="text" id="date" placeholder="e.g. 15 Oct 2026">
+      <label for="text">Your text</label>
+      <textarea id="text" placeholder="Type or paste here… (Hindi, Malayalam and other languages work too)"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="up">📄 Open .txt file</button>
+        <button class="btn" id="sample">Sample</button>
+        <button class="btn" id="clear">Clear</button>
+        <span class="meta" id="count"></span>
+      </div>
+      <input type="file" id="file" accept=".txt,text/plain" hidden>
+    </div>
+    <div class="card">
+      <h2><span class="n">2</span> Pick the look</h2>
+      <label>Handwriting style</label><div class="chips" id="fonts"></div>
+      <label>Pen colour</label>
+      <div class="sw" id="pens"><input type="color" id="ink" value="#1f3a93" aria-label="Custom pen colour"></div>
+      <label>Paper</label><div class="chips" id="papers"></div>
+    </div>
+    <div class="card">
+      <h2><span class="n">3</span> Fine-tune (optional)</h2>
+      <div class="sl"><label for="size">Text size</label><output></output><input type="range" id="size" min="16" max="40" value="24"></div>
+      <div class="sl"><label for="hsize">Heading size</label><output></output><input type="range" id="hsize" min="24" max="60" value="40"></div>
+      <div class="sl"><label for="lh">Line spacing</label><output></output><input type="range" id="lh" min="28" max="52" value="36"></div>
+      <div class="sl"><label for="ws">Word gap</label><output></output><input type="range" id="ws" min="0" max="24" value="5"></div>
+      <div class="sl"><label for="ls">Letter gap</label><output></output><input type="range" id="ls" min="-1" max="4" step=".5" value="0"></div>
+      <div class="sl"><label for="nat">Natural wobble (human feel)</label><output></output><input type="range" id="nat" min="0" max="10" value="4"></div>
+      <label class="chk"><input type="checkbox" id="margin" checked> Margin line</label>
+      <label class="chk"><input type="checkbox" id="ul" checked> Underline heading</label>
+      <label class="chk"><input type="checkbox" id="pnum" checked> Page numbers</label>
+      <label class="chk"><input type="checkbox" id="shade"> Scanned-paper shadow</label>
+    </div>
+  </section>
+  <section id="stage" aria-live="polite"></section>
+</main>
+<div class="tips">
+  <div class="card"><h3>1. Type</h3><p>Write or paste your text. Long text flows onto new pages by itself.</p></div>
+  <div class="card"><h3>2. Style</h3><p>Choose handwriting, pen and paper. The preview updates instantly.</p></div>
+  <div class="card"><h3>3. Download</h3><p>Save as PNG, JPG or a multi-page PDF using the buttons at the bottom.</p></div>
+</div>
+<div class="bar">
+  <select id="q" aria-label="Quality"><option value="1">Normal</option><option value="2" selected>HD</option><option value="3">Ultra HD</option></select>
+  <button class="btn pr" id="dpdf">⬇ PDF (all pages)</button>
+  <button class="btn" id="dpng">⬇ PNG</button>
+  <button class="btn" id="djpg">⬇ JPG</button>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const FONTS=[["Caveat","Caveat"],["Kalam","Kalam (Hindi)"],["Manjari","Manjari (Malayalam)"],["Indie Flower","Indie Flower"],["Patrick Hand","Patrick Hand"],["Homemade Apple","Homemade Apple"],["Nanum Pen Script","Pen Script"],["Gloria Hallelujah","Gloria"],["Schoolbell","Schoolbell"],["Reenie Beanie","Reenie"],["Shadows Into Light","Shadows"],["Handlee","Handlee"],["Dancing Script","Dancing"],["Covered By Your Grace","Grace"]];
+const PENS=[["#1f3a93","Blue"],["#15151a","Black"],["#c0262d","Red"],["#7a1620","Dark red"],["#1b7a3d","Green"],["#6a2c91","Purple"],["#2b8fd6","Sky blue"],["#555a63","Pencil"],["#f4f4ee","Chalk white"]];
+const PAPERS={lined:["Notebook","#fffdf8","#9ec5e8","#e07b7b","lines"],grid:["Graph","#ffffff","#bcd7ee","#e07b7b","grid"],dots:["Dotted","#ffffff","#9aa7b4","#e07b7b","dots"],plain:["Plain white","#ffffff","","","none"],yellow:["Yellow pad","#fff3b8","#d9c56a","#d98a8a","lines"],vintage:["Vintage","#f1e3c3","#c8ae7a","#b9703f","lines"],board:["Blackboard","#24352d","#3d5a4b","#5b7a69","lines"]};
+const SAMPLE="Dear friend,\n\nI hope you are doing well. Today I tried this handwriting tool and it is wonderful! Just type your text, choose a pen and a paper, and download your page.\n\nYou can use it for assignments, notes, letters, birthday wishes and much more.\n\nWith love,\nYour friend";
+let ST={font:"Caveat",ink:"#1f3a93",paper:"lined"},timer;
+const W=794,H=1123;
+function mk(parent,list,cur,fn,render){list.forEach(it=>{const b=document.createElement("button");b.type="button";b.className=parent.id==="pens"?"":"chip";render(b,it);b.onclick=()=>{ST[cur]=fn(it);sync();go()};b.dataset.k=fn(it);parent.insertBefore(b,parent.querySelector("input"))})}
+mk($("fonts"),FONTS,"font",a=>a[0],(b,a)=>{b.innerHTML='<span class="aa" style="font-family:\''+a[0]+'\'">Aa Abc</span>'+a[1]});
+mk($("pens"),PENS,"ink",a=>a[0],(b,a)=>{b.style.background=a[0];b.title=a[1];b.setAttribute("aria-label",a[1]+" pen")});
+mk($("papers"),Object.entries(PAPERS),"paper",a=>a[0],(b,a)=>{b.innerHTML='<span class="aa" style="font-size:20px">'+({lines:"📓",grid:"▦",dots:"⁙",none:"▢"}[a[1][4]])+"</span>"+a[1][0]});
+function sync(){document.querySelectorAll("#fonts .chip,#pens button,#papers .chip").forEach(b=>{const g=b.closest("#fonts")?"font":b.closest("#pens")?"ink":"paper";b.setAttribute("aria-pressed",String(b.dataset.k===ST[g]))});$("ink").value=ST.ink.length===7?ST.ink:"#000000"}
+$("ink").oninput=e=>{ST.ink=e.target.value;sync();go()};
+const IDS=["head","date","text","size","hsize","lh","ws","ls","nat"],CK=["margin","ul","pnum","shade"];
+function rnd(s){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function lines(txt,nat,seed){let k=seed;return txt.split("\n").map(l=>{if(!l.trim())return'<div class="ln">&nbsp;</div>';const ind=l.match(/^\s*/)[0].length;const parts=l.trim().split(/\s+/).map(w=>{k++;if(!nat)return esc(w);const a=rnd(k),b=rnd(k*7+3),c=rnd(k*13+5);return'<span class="w" style="transform:translateY('+((a-.5)*nat*.9).toFixed(2)+'px) rotate('+((b-.5)*nat*.7).toFixed(2)+'deg);opacity:'+(1-c*nat*.025).toFixed(2)+'">'+esc(w)+"</span>"});return'<div class="ln" style="padding-left:'+Math.min(ind,12)*8+'px">'+parts.join(" ")+"</div>"}).join("")}
+function read(){const v={};IDS.forEach(i=>v[i]=$(i).value);CK.forEach(i=>v[i]=$(i).checked);return v}
+function css(p,L,T){const[,bg,ln,,kind]=PAPERS[p];let img="",size="",pos="";if(kind==="lines"){img=`linear-gradient(to bottom,transparent ${L-1.5}px,${ln} ${L-1.5}px)`;size=`100% ${L}px`;pos=`0 ${T}px`}else if(kind==="grid"){img=`linear-gradient(to bottom,transparent ${L-1}px,${ln} ${L-1}px),linear-gradient(to right,transparent ${L-1}px,${ln} ${L-1}px)`;size=`${L}px ${L}px`;pos=`0 ${T}px`}else if(kind==="dots"){img=`radial-gradient(${ln} 1.5px,transparent 1.8px)`;size=`${L}px ${L}px`;pos=`${L/2}px ${T-L/2}px`}return`background-color:${bg};background-image:${img||"none"};background-size:${size||"auto"};background-position:${pos||"0 0"}`}
+async function render(){
+  const v=read(),L=+v.lh,nat=+v.nat,fam=`'${ST.font}',cursive`;
+  try{await document.fonts.load(`${v.size}px "${ST.font}"`,"Aa അ अ")}catch(e){}
+  const T=Math.round(100/L)*L,left=92,cw=W-left-44,ch=Math.floor((H-T-56)/L)*L,top=Math.round(L*.1);
+  let html="";
+  if(v.date.trim())html+=`<div class="ln" style="text-align:right">${esc(v.date)}</div>`;
+  if(v.head.trim())html+=`<div class="hd" style="font-size:${v.hsize}px;${v.ul?"text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px":""}">${lines(v.head,nat,11).replace(/<div class="ln"[^>]*>/,"<div>")}</div>`;
+  html+=lines(v.text,nat,101);
+  const base=`font-family:${fam};font-size:${v.size}px;color:${ST.ink};word-spacing:${v.ws}px;letter-spacing:${v.ls}px;--lh:${L}px;width:${cw}px`;
+  const m=$("m")||Object.assign(document.createElement("div"),{id:"m"});m.style.cssText="position:absolute;visibility:hidden;left:-9999px;"+base;m.innerHTML=html;document.body.appendChild(m);
+  const h=m.scrollHeight,n=Math.max(1,Math.ceil(h/ch));
+  const st=$("stage"),sc=Math.min(1,(st.clientWidth-4)/W);st.innerHTML="";
+  for(let i=0;i<n;i++){
+    const lab=document.createElement("div");lab.className="pglab";lab.textContent="Page "+(i+1)+" of "+n;
+    const w=document.createElement("div");w.className="pgw";w.style.cssText=`width:${W*sc}px;height:${H*sc}px`;
+    const mg=v.margin&&PAPERS[ST.paper][3]?`<div class="mg" style="left:${left-18}px;background:${PAPERS[ST.paper][3]}"></div>`:"";
+    w.innerHTML=`<div class="page" data-i="${i}" style="${css(ST.paper,L,T)};transform:scale(${sc})">${mg}<div class="clip" style="left:${left}px;top:${T}px;width:${cw}px;height:${ch}px"><div class="inner" style="${base};top:${top}px;margin-top:${-i*ch}px">${html}</div></div>${v.pnum&&n>1?`<div class="pn" style="font-family:${fam};color:${ST.ink}">– ${i+1} –</div>`:""}${v.shade?'<div class="shade"></div>':""}</div>`;
+    st.append(lab,w);
+  }
+  document.querySelectorAll(".sl").forEach(s=>s.querySelector("output").textContent=s.querySelector("input").value);
+  $("count").textContent=(v.text.trim()?v.text.trim().split(/\s+/).length:0)+" words · "+n+" page"+(n>1?"s":"");
+  try{localStorage.setItem("hs",JSON.stringify({v,ST}))}catch(e){}
+}
+function go(){clearTimeout(timer);timer=setTimeout(render,120)}
+[...IDS,...CK].forEach(i=>$(i).addEventListener("input",go));
+$("theme").onclick=()=>{const d=document.documentElement,dark=(d.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark";d.dataset.theme=dark?"light":"dark"};
+$("sample").onclick=()=>{$("text").value=SAMPLE;$("head").value=$("head").value||"A Letter";go()};
+$("clear").onclick=()=>{$("text").value="";$("head").value="";$("date").value="";go()};
+$("up").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("text").value=r.result;go()};r.readAsText(f)};
+function dl(href,name){const a=document.createElement("a");a.href=href;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+async function shots(type){const sc=+$("q").value,out=[];for(const p of document.querySelectorAll(".page")){const c=await html2canvas(p,{scale:sc,backgroundColor:"#fff",useCORS:true,onclone:(d,e)=>{e.style.transform="none"}});out.push(c.toDataURL(type,.93))}return out}
+async function exp(kind,btn){const t=btn.textContent;btn.textContent="Preparing…";btn.disabled=true;try{await document.fonts.ready;const mime=kind==="png"?"image/png":"image/jpeg";const imgs=await shots(kind==="pdf"?"image/jpeg":mime);
+  if(kind==="pdf"){const pdf=new jspdf.jsPDF("p","mm","a4");imgs.forEach((d,i)=>{if(i)pdf.addPage();pdf.addImage(d,"JPEG",0,0,210,297)});pdf.save("handwriting.pdf")}
+  else imgs.forEach((d,i)=>setTimeout(()=>dl(d,"handwriting-page-"+(i+1)+"."+kind),i*350))}catch(e){alert("Sorry, the download failed. Please try 'Normal' quality.")}btn.textContent=t;btn.disabled=false}
+$("dpdf").onclick=e=>exp("pdf",e.currentTarget);$("dpng").onclick=e=>exp("png",e.currentTarget);$("djpg").onclick=e=>exp("jpg",e.currentTarget);
+try{const s=JSON.parse(localStorage.getItem("hs")||"null");if(s){IDS.forEach(i=>$(i).value=s.v[i]);CK.forEach(i=>$(i).checked=s.v[i]);Object.assign(ST,s.ST)}}catch(e){}
+if(!$("text").value){$("text").value=SAMPLE;$("head").value="A Letter";$("date").value=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}
+sync();render();addEventListener("resize",go);document.fonts.addEventListener("loadingdone",go);
+</script>
+</body>
+</html>
